@@ -5,10 +5,12 @@
  */
 !defined('EMLOG_ROOT') && exit('access deined!');
 
-function plugin_setting_view(){
-	KlDataCall::getInstance()->settingView();
+function plugin_setting_view()
+{
+    KlDataCall::getInstance()->settingView();
 }
 
-function plugin_setting(){
-	KlDataCall::getInstance()->setting();
+function plugin_setting()
+{
+    KlDataCall::getInstance()->setting();
 }
