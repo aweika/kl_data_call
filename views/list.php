@@ -12,7 +12,7 @@
     <?php if (isset($_GET['active_del'])): ?><span class="actived">删除成功</span><?php endif; ?>
     <?php if (isset($_GET['active_update'])): ?><span class="actived">更新缓存成功</span><?php endif; ?>
     <span style="float:right;">
-        <form action="./plugin.php?plugin=kl_data_call&action=setting&update=true" method="POST">
+        <form action="./plugin.php?plugin=kl_data_call&action=setting&update=true" method="POST" onsubmit="return confirm('确定要更新所有数据调用缓存吗？');">
             <input name="kl_data_call_do" class="copy" type="submit" value="一键更新所有数据调用缓存"/>
         </form>
     </span>
