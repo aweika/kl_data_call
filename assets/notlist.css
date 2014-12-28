@@ -1,0 +1,7 @@
+input{font-size:12px;cursor:pointer;}
+input.copy{border:1px solid #DEDEDE;background-color:whiteSmoke;color:#336699;}
+input.copy:hover{border:1px solid #c2e1ef;background-color:#dff4ff;}
+input.edit{border:1px solid #DEDEDE;background-color:whiteSmoke;color:#529214;}
+input.edit:hover{border:1px solid #C6D880;background-color:#E6EFC2;}
+input.del{border:1px solid #DEDEDE;background-color:whiteSmoke;color:#D12F19;}
+input.del:hover{border:1px solid #fbc2c4;background:#fbe3e4;}
