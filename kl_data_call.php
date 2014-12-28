@@ -120,12 +120,12 @@ class KlDataCall{
 	 */
 	private function _moduleConfig(){
 		$options_cache = Cache::getInstance()->readCache('options');
-		$data_call_moudle_config = array();
+		$data_call_module_config = array();
 		foreach($options_cache as $ock=>$ocv){
-			if(preg_match('/^kl_data_call_(\d+)$/', $ock, $didInfo)) $data_call_moudle_config[$didInfo[1]] = unserialize($ocv);
+			if(preg_match('/^kl_data_call_(\d+)$/', $ock, $didInfo)) $data_call_module_config[$didInfo[1]] = unserialize($ocv);
 		}
-		ksort($data_call_moudle_config);
-		return $data_call_moudle_config;
+		ksort($data_call_module_config);
+		return $data_call_module_config;
 	}
 
 	/**
@@ -767,7 +767,7 @@ class KlDataCall{
 	 * 生成预览数据的方法
 	 */
 	public function preview(){
-		$moudle = array();
+		$module = array();
 		$kl_t = isset($_GET['kl_t']) ? intval($_GET['kl_t']) : 0;
 		if($kl_t == 1){
 			$intval_argu_arr = array('kl_t', 'start_num', 'dis_rows', 'author','is_include_img', 'order_style', 'date_style');
@@ -776,9 +776,9 @@ class KlDataCall{
 		}else{
 			$intval_argu_arr = array('kl_t', 'sort', 'start_num', 'dis_rows', 'author', 'filter', 'is_include_img', 'nopwd', 'link_style', 'order_style', 'date_style');
 		}
-		foreach($intval_argu_arr as $iaav) $moudle[$iaav] = intval($_GET[$iaav]);
-		if($kl_t != 2) $moudle['custom_tailor'] = addslashes(trim($_GET['custom_tailor']));
-		$output = $this->_mainFunForPreview($moudle, $_POST['code']);
+		foreach($intval_argu_arr as $iaav) $module[$iaav] = intval($_GET[$iaav]);
+		if($kl_t != 2) $module['custom_tailor'] = addslashes(trim($_GET['custom_tailor']));
+		$output = $this->_mainFunForPreview($module, $_POST['code']);
 		$output = implode('', $output);
 		if($output == '') $output = '<font color="red"><b>没有符合条件的记录！</b></font>';
 		echo $output;
