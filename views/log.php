@@ -9,6 +9,7 @@
     <a class="navi3" href="?plugin=kl_data_call&act=add">文章调用</a>
     <a class="navi4" href="?plugin=kl_data_call&act=add&kl_t=1">微语调用</a>
     <a class="navi4" href="?plugin=kl_data_call&act=add&kl_t=2">EM相册调用</a>
+    <a class="navi4" href="?plugin=kl_data_call&act=about" style="color:orange;">关于作者</a>
     <?php if (isset($_GET['active_save'])): ?><span class="actived">保存成功</span><?php endif; ?>
 </div>
 <form action="./plugin.php?plugin=kl_data_call&action=setting&act=<?php echo $act; ?>" method="POST">

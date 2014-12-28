@@ -9,6 +9,7 @@
     <a class="navi4" href="?plugin=kl_data_call&act=add">文章调用</a>
     <a class="navi4" href="?plugin=kl_data_call&act=add&kl_t=1">微语调用</a>
     <a class="navi4" href="?plugin=kl_data_call&act=add&kl_t=2">EM相册调用</a>
+    <a class="navi4" href="?plugin=kl_data_call&act=about" style="color:orange;">关于作者</a>
     <?php if (isset($_GET['active_del'])): ?><span class="actived">删除成功</span><?php endif; ?>
     <?php if (isset($_GET['active_update'])): ?><span class="actived">更新缓存成功</span><?php endif; ?>
     <span style="float:right;">

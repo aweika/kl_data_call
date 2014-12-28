@@ -302,22 +302,27 @@ class KlDataCall
             include $this->_view('list');
         } else {
             $act = $_GET['act'];
-            if (isset($_GET['id'])) $id = intval($_GET['id']);
-            if (isset($id)) {
-                $module = $data_call_module_config[$id];
-                $kl_t = isset($module['kl_t']) && in_array($module['kl_t'], array_keys($kl_t_array)) ? $module['kl_t'] : 0;
-                $did = $module['did'];
+            if ($act == 'about') {
+                include $this->_view('about');
             } else {
-                $kl_t = isset($_GET['kl_t']) ? intval($_GET['kl_t']) : 0;
-                $did = count($data_call_module_config) == 0 ? 1 : max(array_keys($data_call_module_config)) + 1;
+                if (isset($_GET['id'])) $id = intval($_GET['id']);
+                if (isset($id)) {
+                    $module = $data_call_module_config[$id];
+                    $kl_t = isset($module['kl_t']) && in_array($module['kl_t'], array_keys($kl_t_array)) ? $module['kl_t'] : 0;
+                    $did = $module['did'];
+                } else {
+                    $kl_t = isset($_GET['kl_t']) ? intval($_GET['kl_t']) : 0;
+                    $did = count($data_call_module_config) == 0 ? 1 : max(array_keys($data_call_module_config)) + 1;
+                }
+                if ($kl_t == 1) {//微语调用
+                    $this->_callT($act, $did, $module);
+                } elseif ($kl_t == 2) {//EM相册调用
+                    $this->_callEmAlbum($act, $did, $module);
+                } else {//文章调用
+                    $this->_callLog($act, $did, $module);
+                }
             }
-            if ($kl_t == 1) {//微语调用
-                $this->_callT($act, $did, $module);
-            } elseif ($kl_t == 2) {//EM相册调用
-                $this->_callEmAlbum($act, $did, $module);
-            } else {//文章调用
-                $this->_callLog($act, $did, $module);
-            }
+
         }
     }
 
