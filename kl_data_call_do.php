@@ -4,4 +4,4 @@
  * design by KLLER
  */
 include_once('../../../init.php');
-KlDataCall::getInstance()->call_do();
+KlDataCall::getInstance()->callDo();

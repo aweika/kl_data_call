@@ -32,7 +32,7 @@ class KlDataCall{
 	private $_urlDir = array('assets', 'res');
 
 	//目录不可写提示信息
-	private $_dir_is_writable_msg;
+	private $_dirIsWritableMsg;
 
 	public static function getInstance(){
 		if(is_null(self::$_instance)){
@@ -55,12 +55,12 @@ class KlDataCall{
 		}
 		$this->_inited = true;
 
-		$this->_dir_is_writable_msg = is_writable($this->getDirPath('config')) && is_writable($this->getDirPath('cache')) ? '' : '<span class="error">config或cache目录可能不可写，如果已经是可写状态，请忽略此信息。</span>';
+		$this->_dirIsWritableMsg = is_writable($this->_getDirPath('config')) && is_writable($this->_getDirPath('cache')) ? '' : '<span class="error">config或cache目录可能不可写，如果已经是可写状态，请忽略此信息。</span>';
 		//注册各个钩子
 		addAction('adm_sidebar_ext', array($this, 'hookAdmSideBarExt'));
 	}
 
-	private function getDb(){
+	private function _getDb(){
 		if(!is_null($this->_db)) return $this->_db;
 		if(class_exists('Database', false)){
 			$this->_db = Database::getInstance();
@@ -71,7 +71,7 @@ class KlDataCall{
 	}
 
 	//获取目录方法
-	private function getDirPath($dir){
+	private function _getDirPath($dir){
 		if(in_array($dir, $this->_fileDir)){
 			return dirname(__FILE__).'/'.$dir.'/';
 		}elseif(in_array($dir, $this->_urlDir)){
@@ -81,11 +81,11 @@ class KlDataCall{
 		}
 	}
 
-	private function view($view, $ext='.php'){
-		return $this->getDirPath('views').$view.$ext;
+	private function _view($view, $ext='.php'){
+		return $this->_getDirPath('views').$view.$ext;
 	}
 
-	private function moduleConfig(){
+	private function _moduleConfig(){
 		$options_cache = Cache::getInstance()->readCache('options');
 		$data_call_moudle_config = array();
 		foreach($options_cache as $ock=>$ocv){
@@ -95,7 +95,7 @@ class KlDataCall{
 		return $data_call_moudle_config;
 	}
 
-	private function callT($act, $did, $module){
+	private function _callT($act, $did, $module){
 		$user_cache = Cache::getInstance()->readCache('user');
 		$author_option_str = '<option value="0">全部</option>';
 		foreach($user_cache as $uk=>$user){
@@ -127,10 +127,10 @@ class KlDataCall{
 			$date_style_option_str .= "<option value=\"{$value}\" {$selected}>{$date_style}</option>";
 		}
 
-		include $this->view('t');
+		include $this->_view('t');
 	}
 
-	private function callEmAlbum($act, $did, $module){
+	private function _callEmAlbum($act, $did, $module){
 		$active_plugins = Option::get('active_plugins');
 		$the_notice = '';
 		if(!in_array('kl_album/kl_album.php', $active_plugins)){
@@ -168,10 +168,10 @@ class KlDataCall{
 				}
 			}
 		}
-		include $this->view('em_album');
+		include $this->_view('em_album');
 	}
 
-	private function callLog($act, $did, $module){
+	private function _callLog($act, $did, $module){
 		$user_cache = Cache::getInstance()->readCache('user');
 		$author_option_str = '<option value="0">全部</option>';
 		foreach($user_cache as $uk=>$user){
@@ -228,20 +228,20 @@ class KlDataCall{
 			$selected = (isset($module['date_style']) && $value == $module['date_style']) ? 'selected' : '';
 			$date_style_option_str .= "<option value=\"{$value}\" {$selected}>{$date_style}</option>";
 		}
-		include $this->view('log');
+		include $this->_view('log');
 	}
 
 	public function settingView(){
-		$this->getHeader();
+		$this->_getHeader();
 		if(isset($_GET['act'])){
-			echo sprintf('<script src="%s/list.js" type="text/javascript"></script>', $this->getDirPath('assets'));
+			echo sprintf('<script src="%s/list.js" type="text/javascript"></script>', $this->_getDirPath('assets'));
 		}else{
-			echo sprintf('<link rel="stylesheet" href="%s">', $this->getDirPath('assets').'notlist.css?ver='.urlencode(self::VERSION));
+			echo sprintf('<link rel="stylesheet" href="%s">', $this->_getDirPath('assets').'notlist.css?ver='.urlencode(self::VERSION));
 		}
 		$kl_t_array = array('<font color="red">文章调用</font>', '<font color="green">微语调用</font>', '<font color="blue">EM相册调用</font>');
-		$data_call_module_config = $this->moduleConfig();
+		$data_call_module_config = $this->_moduleConfig();
 		if(!isset($_GET['act'])){
-			include $this->view('list');
+			include $this->_view('list');
 		}else{
 			$act = $_GET['act'];
 			if(isset($_GET['id'])) $id = intval($_GET['id']);
@@ -255,11 +255,11 @@ class KlDataCall{
 				$did = count($data_call_module_config) == 0 ? 1 : max(array_keys($data_call_module_config)) + 1;
 			}
 			if($kl_t == 1){//微语调用
-				$this->callT($act, $did, $module);
+				$this->_callT($act, $did, $module);
 			}elseif($kl_t == 2){//EM相册调用
-				$this->callEmAlbum($act, $did, $module);
+				$this->_callEmAlbum($act, $did, $module);
 			}else{//文章调用
-				$this->callLog($act, $did, $module);
+				$this->_callLog($act, $did, $module);
 			}
 		}
 
@@ -299,20 +299,20 @@ class KlDataCall{
 			Cache::getInstance()->updateCache('options');
 			$kl_data_call_info = Option::get('kl_data_call_'.$module['did']);
 			if(is_null($kl_data_call_info)){
-				$this->getDb()->query("INSERT INTO ".DB_PREFIX."options(option_name, option_value) VALUES('kl_data_call_{$module['did']}', '{$data}')");
+				$this->_getDb()->query("INSERT INTO ".DB_PREFIX."options(option_name, option_value) VALUES('kl_data_call_{$module['did']}', '{$data}')");
 			}else{
-				$this->getDb()->query("UPDATE ".DB_PREFIX."options SET option_value='{$data}' WHERE option_name='kl_data_call_{$module['did']}'");
+				$this->_getDb()->query("UPDATE ".DB_PREFIX."options SET option_value='{$data}' WHERE option_name='kl_data_call_{$module['did']}'");
 			}
-			$this->main_fun($module);
-			//把更新缓存移到kl_data_call_main_fun()后面，是因为如果在前面会造成后面读取缓存报错，导致新建后第一次不能正常生成。
+			$this->_mainFun($module);
+			//把更新缓存移到kl_data_call__mainFun()后面，是因为如果在前面会造成后面读取缓存报错，导致新建后第一次不能正常生成。
 			Cache::getInstance()->updateCache('options');
 			emDirect("./plugin.php?plugin=kl_data_call&act=edit&id={$module['did']}&active_save=1");
 		}elseif($act == 'del'){
 			$id = intval($_GET['id']);
-			$this->getDb()->query("DELETE FROM ".DB_PREFIX."options WHERE option_name='kl_data_call_{$id}'");
+			$this->_getDb()->query("DELETE FROM ".DB_PREFIX."options WHERE option_name='kl_data_call_{$id}'");
 
 			Cache::getInstance()->updateCache('options');
-			@unlink($this->getDirPath('cache').'/'.$id.'.php');
+			@unlink($this->_getDirPath('cache').'/'.$id.'.php');
 			emDirect("./plugin.php?plugin=kl_data_call&active_del=1");
 		}
 
@@ -320,37 +320,37 @@ class KlDataCall{
 		{
 			$options_cache = Cache::getInstance()->readCache('options');
 			foreach($options_cache as $ock=>$ocv){
-				if(preg_match('/^kl_data_call_(\d+)$/', $ock)) $this->main_fun(unserialize($ocv));
+				if(preg_match('/^kl_data_call_(\d+)$/', $ock)) $this->_mainFun(unserialize($ocv));
 			}
 		}
 		emDirect("./plugin.php?plugin=kl_data_call&active_update=1");
 	}
 
-	private function main_fun($module, $cols=1, $col=1){
+	private function _mainFun($module, $cols=1, $col=1){
 		$code = stripslashes(base64_decode($module['code']));
-		$output = $this->main_fun_for_preview($module, $code);
-		$file_name = $this->getDirPath('cache').'/'.$module['did'].'.php';
+		$output = $this->_mainFunForPreview($module, $code);
+		$file_name = $this->_getDirPath('cache').'/'.$module['did'].'.php';
 		$fp = @fopen($file_name, 'w');
 		@fwrite($fp, "<?php return ".var_export($output, true).';');
 		@fclose($fp);
-		$output = $this->the_output_data($output, $cols, $col);
+		$output = $this->_theOutputData($output, $cols, $col);
 		return implode('', $output);
 	}
 
-	private function main_fun_for_preview($module, $code)
+	private function _mainFunForPreview($module, $code)
 	{
 		$kl_t_array = array('文章调用', '微语调用', 'EM相册调用');
 		$kl_t = isset($module['kl_t']) && in_array($module['kl_t'], array_keys($kl_t_array)) ? $module['kl_t'] : 0;
 		if($kl_t == 1){
-			return $this->main_fun_for_preview_t($module, $code);
+			return $this->_mainFunForPreviewT($module, $code);
 		}elseif($kl_t == 2){
-			return $this->main_fun_for_preview_kl_album($module, $code);
+			return $this->_mainFunForPreviewKlAlbum($module, $code);
 		}else{
-			return $this->main_fun_for_preview_log($module, $code);
+			return $this->_mainFunForPreviewLog($module, $code);
 		}
 	}
 
-	private function main_fun_for_preview_log($module, $code)
+	private function _mainFunForPreviewLog($module, $code)
 	{
 		preg_match_all('%{(.*?)}%s', $code, $anArr, PREG_PATTERN_ORDER);
 		$vArr = $anArr[1];
@@ -386,25 +386,25 @@ class KlDataCall{
 		if($module['order_style'] == 3) $condition .= 'order by rand() ';
 		if($module['custom_tailor'] == '') $condition .= 'limit '.$module['start_num'].','.$module['dis_rows'];
 		$sql = 'select a.gid as id, a.title, if(a.password!="", "", a.excerpt) as excerpt, if(a.password!="", "", a.content) as content, a.date, c.username as author, a.type, a.views, b.sortname as sort, count(d.cid) as cnum from '.DB_PREFIX.'blog a left join '.DB_PREFIX.'sort b on a.sortid=b.sid left join '.DB_PREFIX.'user c on c.uid=a.author left join '.DB_PREFIX.'comment d on d.gid=a.gid and d.hide="n" where a.hide="n" and type!="page" '.$condition;
-		$result = $this->getDb()->query($sql);
-		$dataArr = array();
+		$result = $this->_getDb()->query($sql);
+		$data_arr = array();
 		$auto_id = 1;
-		while($row = $this->getDb()->fetch_array($result, MYSQL_ASSOC))
+		while($row = $this->_getDb()->fetch_array($result, MYSQL_ASSOC))
 		{
 			$row['auto_id'] = $auto_id;
-			array_push($dataArr, $row);
+			array_push($data_arr, $row);
 			$auto_id++;
 		}
 
-		if(count($dataArr) != 0)
+		if(count($data_arr) != 0)
 		{
-			$dataArrKey = array_keys($dataArr[0]);
-			$evArr = array_intersect($vArr, $dataArrKey);
+			$data_arr_key = array_keys($data_arr[0]);
+			$evArr = array_intersect($vArr, $data_arr_key);
 			$extra_arr = array('log_url', 'image', 'image_include_link', 'imageurl', 'title_without_link', 'excerpt_include_readmore', 'comment_count');
 			foreach($extra_arr as $ev){
 				if(in_array($ev, $vArr)) array_push($evArr, $ev);
 			}
-			foreach($dataArr as $dk => $data)
+			foreach($data_arr as $dk => $data)
 			{
 				if($module['link_style'] == 0) $target = '';
 				if($module['link_style'] == 1) $target = 'target="_blank"';
@@ -419,8 +419,8 @@ class KlDataCall{
 				if(in_array('log_url', $vArr)) $data['log_url'] = $log_url;
 				if(in_array('title', $vArr)) $data['title'] = $blog_link_header.$title.'</a>';
 				$excerpt = $data['excerpt'];
-				if(in_array('excerpt', $vArr)) $data['excerpt'] = empty($excerpt) ? $this->breakLog($data['content'],$data['id']) : $excerpt;
-				if(in_array('excerpt_include_readmore', $vArr)) $data['excerpt_include_readmore'] = empty($excerpt) ? $this->breakLog($data['content'],$data['id'], true) : $excerpt .= '<p><a href="'.Url::log($data['id']).'">阅读全文&gt;&gt;</a></p>';
+				if(in_array('excerpt', $vArr)) $data['excerpt'] = empty($excerpt) ? $this->_breakLog($data['content'],$data['id']) : $excerpt;
+				if(in_array('excerpt_include_readmore', $vArr)) $data['excerpt_include_readmore'] = empty($excerpt) ? $this->_breakLog($data['content'],$data['id'], true) : $excerpt .= '<p><a href="'.Url::log($data['id']).'">阅读全文&gt;&gt;</a></p>';
 				$tmpArr = array_intersect(array('image', 'image_include_link', 'imageurl'), $vArr);
 				if(!empty($tmpArr)){
 					$search_pattern = '%<img[^>]*?src=[\'\"]((?:(?!\/admin\/|>).)+?)[\'\"][^>]*?>%s';
@@ -436,13 +436,13 @@ class KlDataCall{
 					if($ev == 'content') continue;
 					$codebak = str_replace('{'.$ev.'}', $data[$ev], $codebak);
 				}
-				$dataArr[$dk] = $codebak;
+				$data_arr[$dk] = $codebak;
 			}
 		}
-		return $dataArr;
+		return $data_arr;
 	}
 
-	private function main_fun_for_preview_t($module, $code)
+	private function _mainFunForPreviewT($module, $code)
 	{
 		preg_match_all('%{(.*?)}%s', $code, $anArr, PREG_PATTERN_ORDER);
 		$vArr = $anArr[1];
@@ -472,25 +472,25 @@ class KlDataCall{
 		if($module['order_style'] == 2) $condition .= 'order by rand() ';
 		if($module['custom_tailor'] == '') $condition .= 'limit '.$module['start_num'].','.$module['dis_rows'];
 		$sql = 'select a.id, a.content, a.img as imageurl, b.username as author, a.date, a.replynum from '.DB_PREFIX.'twitter a left join '.DB_PREFIX.'user b on b.uid=a.author where 1 '.$condition;
-		$result = $this->getDb()->query($sql);
-		$dataArr = array();
+		$result = $this->_getDb()->query($sql);
+		$data_arr = array();
 		$auto_id = 1;
-		while($row = $this->getDb()->fetch_array($result, MYSQL_ASSOC))
+		while($row = $this->_getDb()->fetch_array($result, MYSQL_ASSOC))
 		{
 			$row['auto_id'] = $auto_id;
-			array_push($dataArr, $row);
+			array_push($data_arr, $row);
 			$auto_id++;
 		}
 
-		if(count($dataArr) != 0)
+		if(count($data_arr) != 0)
 		{
-			$dataArrKey = array_keys($dataArr[0]);
-			$evArr = array_intersect($vArr, $dataArrKey);
+			$data_arr_key = array_keys($data_arr[0]);
+			$evArr = array_intersect($vArr, $data_arr_key);
 			$extra_arr = array('thum_imageurl');
 			foreach($extra_arr as $ev){
 				if(in_array($ev, $vArr)) array_push($evArr, $ev);
 			}
-			foreach($dataArr as $dk => $data)
+			foreach($data_arr as $dk => $data)
 			{
 				if(in_array('date', $vArr)){
 					$date_style_encode_arr = array('Y-n-j', 'Y-m-d', 'Y年n月j日', 'Y年m月d日', 'Y-n-j g:i', 'Y-m-d H:i', 'Y-n-j g:i:s', 'Y-m-d H:i:s', 'Y-n-j g:i:s l', 'Y-m-d H:i:s l');
@@ -503,13 +503,13 @@ class KlDataCall{
 				{
 					$codebak = str_replace('{'.$ev.'}', $data[$ev], $codebak);
 				}
-				$dataArr[$dk] = $codebak;
+				$data_arr[$dk] = $codebak;
 			}
 		}
-		return $dataArr;
+		return $data_arr;
 	}
 
-	private function main_fun_for_preview_kl_album($module, $code)
+	private function _mainFunForPreviewKlAlbum($module, $code)
 	{
 		preg_match_all('%{(.*?)}%s', $code, $anArr, PREG_PATTERN_ORDER);
 		$vArr = $anArr[1];
@@ -536,25 +536,25 @@ class KlDataCall{
 		if($module['order_style'] == 2) $condition .= 'order by rand() ';
 		$condition .= 'limit '.$module['start_num'].','.$module['dis_rows'];
 		$sql = 'select filename as thum_photo_url, description as photo_description, album as photo_album, addtime as photo_datetime from '.DB_PREFIX.'kl_album where 1 '.$condition;
-		$result = $this->getDb()->query($sql);
-		$dataArr = array();
+		$result = $this->_getDb()->query($sql);
+		$data_arr = array();
 		$auto_id = 1;
-		while($row = $this->getDb()->fetch_array($result, MYSQL_ASSOC))
+		while($row = $this->_getDb()->fetch_array($result, MYSQL_ASSOC))
 		{
 			$row['auto_id'] = $auto_id;
-			array_push($dataArr, $row);
+			array_push($data_arr, $row);
 			$auto_id++;
 		}
 
-		if(count($dataArr) != 0)
+		if(count($data_arr) != 0)
 		{
-			$dataArrKey = array_keys($dataArr[0]);
-			$evArr = array_intersect($vArr, $dataArrKey);
+			$data_arr_key = array_keys($data_arr[0]);
+			$evArr = array_intersect($vArr, $data_arr_key);
 			$extra_arr = array('album_name', 'album_description', 'album_datetime', 'album_url', 'album_cover', 'photo_url');
 			foreach($extra_arr as $ev){
 				if(in_array($ev, $vArr)) array_push($evArr, $ev);
 			}
-			foreach($dataArr as $dk => $data)
+			foreach($data_arr as $dk => $data)
 			{
 				if(in_array('album_datetime', $vArr)){
 					$date_style_encode_arr = array('Y-n-j', 'Y-m-d', 'Y年n月j日', 'Y年m月d日', 'Y-n-j g:i', 'Y-m-d H:i', 'Y-n-j g:i:s', 'Y-m-d H:i:s', 'Y-n-j g:i:s l', 'Y-m-d H:i:s l');
@@ -572,16 +572,16 @@ class KlDataCall{
 						if(in_array('album_cover', $vArr)){
 							$data['album_cover'] = '';
 							if(isset($kl_album['head'])){
-								$iquery = $this->getDb()->query("SELECT * FROM ".DB_PREFIX."kl_album WHERE id={$kl_album['head']}");
-								if($this->getDb()->num_rows($iquery) > 0){
-									$irow = $this->getDb()->fetch_array($iquery);
+								$iquery = $this->_getDb()->query("SELECT * FROM ".DB_PREFIX."kl_album WHERE id={$kl_album['head']}");
+								if($this->_getDb()->num_rows($iquery) > 0){
+									$irow = $this->_getDb()->fetch_array($iquery);
 									$data['album_cover'] = BLOG_URL.substr($irow['filename'], 3);
 								}
 							}
 							if(empty($data['album_cover'])){
-								$iquery = $this->getDb()->query("SELECT * FROM ".DB_PREFIX."kl_album WHERE 1 ".$condition);
-								if($this->getDb()->num_rows($iquery) > 0){
-									$irow = $this->getDb()->fetch_array($iquery);
+								$iquery = $this->_getDb()->query("SELECT * FROM ".DB_PREFIX."kl_album WHERE 1 ".$condition);
+								if($this->_getDb()->num_rows($iquery) > 0){
+									$irow = $this->_getDb()->fetch_array($iquery);
 									$data['album_cover'] = BLOG_URL.substr($irow['filename'], 3);
 								}
 							}
@@ -593,34 +593,34 @@ class KlDataCall{
 				{
 					$codebak = str_replace('{'.$ev.'}', $data[$ev], $codebak);
 				}
-				$dataArr[$dk] = $codebak;
+				$data_arr[$dk] = $codebak;
 			}
 		}
-		return $dataArr;
+		return $data_arr;
 	}
-	public function for_internal($id, $cols=1, $col=1)
+	public function forInternal($id, $cols=1, $col=1)
 	{
-		echo $this->for_internal_value($id, $cols, $col);
+		echo $this->forInternalValue($id, $cols, $col);
 	}
 
-	private function the_output_data($dataArr, $cols, $col){
-		if(is_array($dataArr) && !empty($dataArr)){
+	private function _theOutputData($data_arr, $cols, $col){
+		if(is_array($data_arr) && !empty($data_arr)){
 			$i = 1;
-			$newDataArr = array();
-			foreach($dataArr as $dk => $dv){
+			$new_data_arr = array();
+			foreach($data_arr as $dk => $dv){
 				if($cols > 0 && $col > 0 && $cols >= $col){
 					$new_col = $cols == $col ? 0 : $col;
 					if($i % $cols == $new_col){
-						array_push($newDataArr, $dv);
+						array_push($new_data_arr, $dv);
 					}
 				}
 				$i++;
 			}
 		}
-		if(!empty($newDataArr)) $dataArr = $newDataArr;
-		return $dataArr;
+		if(!empty($new_data_arr)) $data_arr = $new_data_arr;
+		return $data_arr;
 	}
-	public function for_internal_value($id, $cols=1, $col=1)
+	public function forInternalValue($id, $cols=1, $col=1)
 	{
 		$id = intval($id);
 		$cols = intval($cols);
@@ -629,18 +629,18 @@ class KlDataCall{
 		$kl_data_call_info = Option::get('kl_data_call_'.$id);
 		if(is_null($kl_data_call_info)) return $output;
 		$module = unserialize($kl_data_call_info);
-		$cache_file = $this->getDirPath('cache')."/{$id}.php";
+		$cache_file = $this->_getDirPath('cache')."/{$id}.php";
 		if(file_exists($cache_file) && time() - filemtime($cache_file) < $module['cache_limit']){
-			$dataArr = include $cache_file;
-			$dataArr = $this->the_output_data($dataArr, $cols, $col);
-			$output .= implode('', $dataArr);
+			$data_arr = include $cache_file;
+			$data_arr = $this->_theOutputData($data_arr, $cols, $col);
+			$output .= implode('', $data_arr);
 		}else{
-			$output = $this->main_fun($module, $cols, $col);
+			$output = $this->_mainFun($module, $cols, $col);
 		}
 		return $output;
 	}
 
-	private function breakLog($content, $lid, $isreadmore = false)
+	private function _breakLog($content, $lid, $isreadmore = false)
 	{
 		$a = explode('[break]',$content,2);
 		if(!empty($a[1]) && $isreadmore === true) $a[0].='<p><a href="'.Url::log($lid).'">阅读全文&gt;&gt;</a></p>';
@@ -659,23 +659,23 @@ class KlDataCall{
 		}
 		foreach($intval_argu_arr as $iaav) $moudle[$iaav] = intval($_GET[$iaav]);
 		if($kl_t != 2) $moudle['custom_tailor'] = addslashes(trim($_GET['custom_tailor']));
-		$output = $this->main_fun_for_preview($moudle, $_POST['code']);
+		$output = $this->_mainFunForPreview($moudle, $_POST['code']);
 		$output = implode('', $output);
 		if($output == '') $output = '<font color="red"><b>没有符合条件的记录！</b></font>';
 		echo $output;
 	}
-	private function getHeader(){
+	private function _getHeader(){
 		echo '<script src="../include/lib/js/common_tpl.js" type="text/javascript"></script>';
-		echo sprintf('<script src="%s/jquery.zclip.min.js" type="text/javascript"></script>', $this->getDirPath('res'));
+		echo sprintf('<script src="%s/jquery.zclip.min.js" type="text/javascript"></script>', $this->_getDirPath('res'));
 		echo sprintf('<script type="text/javascript">$("#%s").addClass("sidebarsubmenu1");setTimeout(hideActived,2600);</script>', self::ID);
-		echo sprintf('<link rel="stylesheet" href="%s">', $this->getDirPath('assets').'main.css?ver='.urlencode(self::VERSION));
-		echo sprintf('<div class=containertitle><b>%s</b><span style="font-size:12px;color:#999999;">（版本：%s）</span>%s</div>', self::NAME, self::VERSION, $this->_dir_is_writable_msg);
+		echo sprintf('<link rel="stylesheet" href="%s">', $this->_getDirPath('assets').'main.css?ver='.urlencode(self::VERSION));
+		echo sprintf('<div class=containertitle><b>%s</b><span style="font-size:12px;color:#999999;">（版本：%s）</span>%s</div>', self::NAME, self::VERSION, $this->_dirIsWritableMsg);
 	}
 
-	public function call_do(){
+	public function callDo(){
 		$cols = !empty($_GET['COLS']) && intval($_GET['COLS']) > 1 ? intval($_GET['COLS']) : 1;
 		$col = !empty($_GET['COL']) && intval($_GET['COL']) > 1 ? $_GET['COL'] : 1;
-		$output = isset($_GET['ID']) ? $this->for_internal_value(intval($_GET['ID']), $cols, $col) : '';
+		$output = isset($_GET['ID']) ? $this->forInternalValue(intval($_GET['ID']), $cols, $col) : '';
 		if(trim($output) != '')
 		{
 			if(isset($_GET['callback']) && trim($_GET['callback']) == 'html') exit($output);
@@ -693,5 +693,5 @@ KlDataCall::getInstance()->init();
 
 function kl_data_call_for_internal($id, $cols=1, $col=1)
 {
-	return KlDataCall::getInstance()->for_internal_value($id, $cols, $col);
+	return KlDataCall::getInstance()->forInternalValue($id, $cols, $col);
 }
