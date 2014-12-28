@@ -1,4 +1,9 @@
-<?php !defined('EMLOG_ROOT') && exit('access deined!');?>
+<?php
+/**
+ * 插件设置页面列表页的模板
+ */
+!defined('EMLOG_ROOT') && exit('access deined!');
+?>
 <div class="containertitle2">
 	<a class="navi3" href="?plugin=kl_data_call">调用列表</a>
 	<a class="navi4" href="?plugin=kl_data_call&act=add">文章调用</a>

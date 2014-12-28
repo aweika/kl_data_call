@@ -11,6 +11,10 @@ Author URL: http://kller.cn
 */
 !defined('EMLOG_ROOT') && exit('access deined!');
 
+/**
+ * Class 数据调用插件主程序类
+ */
+
 class KlDataCall{
 	const ID = 'kl_data_call';
 	const NAME = '数据调用';
@@ -34,6 +38,11 @@ class KlDataCall{
 	//目录不可写提示信息
 	private $_dirIsWritableMsg;
 
+	/**
+	 * 静态方法，返回数据调用插件实例
+	 *
+	 * @return KlDataCall
+	 */
 	public static function getInstance(){
 		if(is_null(self::$_instance)){
 			self::$_instance = new self();
@@ -44,7 +53,9 @@ class KlDataCall{
 	private function __construct(){
 	}
 
-	//侧边栏钩子执行方法
+	/**
+	 * 侧边栏钩子执行方法
+	 */
 	public function hookAdmSidebarExt(){
 		echo '<div class="sidebarsubmenu" id="'.self::ID.'"><a href="./plugin.php?plugin='.self::ID.'">'.self::NAME.'</a></div>';
 	}
@@ -53,13 +64,18 @@ class KlDataCall{
 		if($this->_inited === true){
 			return;
 		}
-		$this->_inited = true;
 
+		$this->_inited = true;
 		$this->_dirIsWritableMsg = is_writable($this->_getDirPath('config')) && is_writable($this->_getDirPath('cache')) ? '' : '<span class="error">config或cache目录可能不可写，如果已经是可写状态，请忽略此信息。</span>';
-		//注册各个钩子
+
 		addAction('adm_sidebar_ext', array($this, 'hookAdmSideBarExt'));
 	}
 
+	/**
+	 * 获取数据库连接实例
+	 *
+	 * @return MySql|MySqlii|object
+	 */
 	private function _getDb(){
 		if(!is_null($this->_db)) return $this->_db;
 		if(class_exists('Database', false)){
@@ -70,7 +86,12 @@ class KlDataCall{
 		return $this->_db;
 	}
 
-	//获取目录方法
+	/**
+	 * 获取目录方法
+	 *
+	 * @param $dir
+	 * @return string
+	 */
 	private function _getDirPath($dir){
 		if(in_array($dir, $this->_fileDir)){
 			return dirname(__FILE__).'/'.$dir.'/';
@@ -81,10 +102,22 @@ class KlDataCall{
 		}
 	}
 
+	/**
+	 * 获取模板文件全路径
+	 *
+	 * @param $view 文件
+	 * @param string $ext 扩展名
+	 * @return string
+	 */
 	private function _view($view, $ext='.php'){
 		return $this->_getDirPath('views').$view.$ext;
 	}
 
+	/**
+	 * 获取调用模板配置
+	 *
+	 * @return array
+	 */
 	private function _moduleConfig(){
 		$options_cache = Cache::getInstance()->readCache('options');
 		$data_call_moudle_config = array();
@@ -95,6 +128,13 @@ class KlDataCall{
 		return $data_call_moudle_config;
 	}
 
+	/**
+	 * 微语调用主方法
+	 *
+	 * @param $act 编辑还是添加
+	 * @param $did 调用模板ID
+	 * @param $module
+	 */
 	private function _callT($act, $did, $module){
 		$user_cache = Cache::getInstance()->readCache('user');
 		$author_option_str = '<option value="0">全部</option>';
@@ -130,6 +170,13 @@ class KlDataCall{
 		include $this->_view('t');
 	}
 
+	/**
+	 * EM相册调用主方法
+	 *
+	 * @param $act 编辑还是添加
+	 * @param $did 调用模板ID
+	 * @param $module
+	 */
 	private function _callEmAlbum($act, $did, $module){
 		$active_plugins = Option::get('active_plugins');
 		$the_notice = '';
@@ -171,6 +218,13 @@ class KlDataCall{
 		include $this->_view('em_album');
 	}
 
+	/**
+	 * 日志调用主方法
+	 *
+	 * @param $act 编辑还是添加
+	 * @param $did 调用模板ID
+	 * @param $module
+	 */
 	private function _callLog($act, $did, $module){
 		$user_cache = Cache::getInstance()->readCache('user');
 		$author_option_str = '<option value="0">全部</option>';
@@ -231,6 +285,9 @@ class KlDataCall{
 		include $this->_view('log');
 	}
 
+	/**
+	 * 设置页面主程序
+	 */
 	public function settingView(){
 		$this->_getHeader();
 		if(isset($_GET['act'])){
@@ -262,9 +319,11 @@ class KlDataCall{
 				$this->_callLog($act, $did, $module);
 			}
 		}
-
 	}
 
+	/**
+	 * 设置页面后台保存主程序
+	 */
 	public function setting(){
 		$act = isset($_GET['act']) ? addslashes(trim($_GET['act'])) : '';
 		if($act == 'add' || $act == 'edit')
@@ -326,6 +385,14 @@ class KlDataCall{
 		emDirect("./plugin.php?plugin=kl_data_call&active_update=1");
 	}
 
+	/**
+	 * 将调用数据写入缓存，返回拼接的字符串
+	 *
+	 * @param $module 参数配置
+	 * @param int $cols 总列数
+	 * @param int $col 第几列
+	 * @return string
+	 */
 	private function _mainFun($module, $cols=1, $col=1){
 		$code = stripslashes(base64_decode($module['code']));
 		$output = $this->_mainFunForPreview($module, $code);
@@ -337,6 +404,13 @@ class KlDataCall{
 		return implode('', $output);
 	}
 
+	/**
+	 * 生成预览数据
+	 *
+	 * @param $module 参数配置
+	 * @param $code 调用模板
+	 * @return array
+	 */
 	private function _mainFunForPreview($module, $code)
 	{
 		$kl_t_array = array('文章调用', '微语调用', 'EM相册调用');
@@ -350,6 +424,13 @@ class KlDataCall{
 		}
 	}
 
+	/**
+	 * 日志调用模板解析方法
+	 *
+	 * @param $module 参数配置
+	 * @param $code 调用模板
+	 * @return array
+	 */
 	private function _mainFunForPreviewLog($module, $code)
 	{
 		preg_match_all('%{(.*?)}%s', $code, $anArr, PREG_PATTERN_ORDER);
@@ -442,6 +523,13 @@ class KlDataCall{
 		return $data_arr;
 	}
 
+	/**
+	 * 微语调用模板解析方法
+	 *
+	 * @param $module 参数配置
+	 * @param $code 调用模板
+	 * @return array
+	 */
 	private function _mainFunForPreviewT($module, $code)
 	{
 		preg_match_all('%{(.*?)}%s', $code, $anArr, PREG_PATTERN_ORDER);
@@ -509,6 +597,13 @@ class KlDataCall{
 		return $data_arr;
 	}
 
+	/**
+	 * EM相册调用模板解析方法
+	 *
+	 * @param $module 参数配置
+	 * @param $code 调用模板
+	 * @return array
+	 */
 	private function _mainFunForPreviewKlAlbum($module, $code)
 	{
 		preg_match_all('%{(.*?)}%s', $code, $anArr, PREG_PATTERN_ORDER);
@@ -598,11 +693,15 @@ class KlDataCall{
 		}
 		return $data_arr;
 	}
-	public function forInternal($id, $cols=1, $col=1)
-	{
-		echo $this->forInternalValue($id, $cols, $col);
-	}
 
+	/**
+	 * 调用的数据具体的分列处理方法
+	 *
+	 * @param $data_arr 总数据
+	 * @param $cols 分几列
+	 * @param $col 第几列
+	 * @return array
+	 */
 	private function _theOutputData($data_arr, $cols, $col){
 		if(is_array($data_arr) && !empty($data_arr)){
 			$i = 1;
@@ -620,6 +719,15 @@ class KlDataCall{
 		if(!empty($new_data_arr)) $data_arr = $new_data_arr;
 		return $data_arr;
 	}
+
+	/**
+	 * 获取调用的数据
+	 *
+	 * @param $id 模板ID
+	 * @param int $cols 分几列
+	 * @param int $col 第几列
+	 * @return string
+	 */
 	public function forInternalValue($id, $cols=1, $col=1)
 	{
 		$id = intval($id);
@@ -640,6 +748,14 @@ class KlDataCall{
 		return $output;
 	}
 
+	/**
+	 * 日志摘要方法
+	 *
+	 * @param $content 日志内容
+	 * @param $lid 日志ID
+	 * @param bool $isreadmore 是不显示阅读全文
+	 * @return string
+	 */
 	private function _breakLog($content, $lid, $isreadmore = false)
 	{
 		$a = explode('[break]',$content,2);
@@ -647,6 +763,9 @@ class KlDataCall{
 		return $a[0];
 	}
 
+	/**
+	 * 生成预览数据的方法
+	 */
 	public function preview(){
 		$moudle = array();
 		$kl_t = isset($_GET['kl_t']) ? intval($_GET['kl_t']) : 0;
@@ -664,6 +783,10 @@ class KlDataCall{
 		if($output == '') $output = '<font color="red"><b>没有符合条件的记录！</b></font>';
 		echo $output;
 	}
+
+	/**
+	 * 插件设置各页面头部
+	 */
 	private function _getHeader(){
 		echo '<script src="../include/lib/js/common_tpl.js" type="text/javascript"></script>';
 		echo sprintf('<script src="%s/jquery.zclip.min.js" type="text/javascript"></script>', $this->_getDirPath('res'));
@@ -672,6 +795,9 @@ class KlDataCall{
 		echo sprintf('<div class=containertitle><b>%s</b><span style="font-size:12px;color:#999999;">（版本：%s）</span>%s</div>', self::NAME, self::VERSION, $this->_dirIsWritableMsg);
 	}
 
+	/**
+	 * 外部调用数据的处理方法
+	 */
 	public function callDo(){
 		$cols = !empty($_GET['COLS']) && intval($_GET['COLS']) > 1 ? intval($_GET['COLS']) : 1;
 		$col = !empty($_GET['COL']) && intval($_GET['COL']) > 1 ? $_GET['COL'] : 1;
@@ -687,11 +813,29 @@ class KlDataCall{
 			}
 		}
 	}
+
+	/**
+	 * 内部调用方法
+	 *
+	 * @param $id 模板ID
+	 * @param int $cols 分几列
+	 * @param int $col 第几列
+	 */
+	public function forInternal($id, $cols=1, $col=1)
+	{
+		echo $this->forInternalValue($id, $cols, $col);
+	}
 }
-
-KlDataCall::getInstance()->init();
-
+/**
+ * 内部调用方法（为了兼容老版本的内部调用，在类外面单独写个同名的方法）
+ * @param $id 模板ID
+ * @param int $cols 分几列
+ * @param int $col 第几列
+ * @return string
+ */
 function kl_data_call_for_internal($id, $cols=1, $col=1)
 {
 	return KlDataCall::getInstance()->forInternalValue($id, $cols, $col);
 }
+
+KlDataCall::getInstance()->init();
