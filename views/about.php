@@ -37,8 +37,8 @@
             <td style="text-align:center;width:50%;">微信打赏</td>
         </tr>
         <tr>
-            <td style="text-align:center;"><img style="width:200px;height:200px;" src="<?php echo $this->_getDirPath('res')?>alipay.png"></td>
-            <td style="text-align:center;"><img style="width:200px;height:200px;" src="<?php echo $this->_getDirPath('res')?>weixin.png"></td>
+            <td style="text-align:center;"><img style="width:256px;height:256px;" src="<?php echo $this->_getDirPath('res')?>alipay.png"></td>
+            <td style="text-align:center;"><img style="width:256px;height:256px;" src="<?php echo $this->_getDirPath('res')?>weixin.png"></td>
         </tr>
     </table>
 </div>
