@@ -77,8 +77,8 @@ class KlDataCall
         //未用过数据调用插件或使用2.0版本前不存在$kl_data_call_info信息
         if (is_null($kl_data_call_info)) {
             $info = serialize(array('version' => self::VERSION));
-            $this->_getDb()->query("INSERT INTO " . DB_PREFIX . "options(option_name, option_value) VALUES('kl_data_call_info', '{$info}')");
-            if ($this->_getDb()->affected_rows() > 0) {
+            $this->_db->query("INSERT INTO " . DB_PREFIX . "options(option_name, option_value) VALUES('kl_data_call_info', '{$info}')");
+            if ($this->_db->affected_rows() > 0) {
                 $cod = @opendir($this->_getDirPath('config'));
                 $did_arr = array();
                 while (($filename = readdir($cod)) !== false) {
@@ -92,7 +92,7 @@ class KlDataCall
                     $kl_data_call_id = Option::get('kl_data_call_' . $did);
                     if (is_null($kl_data_call_id)) {
                         $data = str_replace('<?php exit;//', '', @file_get_contents($this->_getDirPath('config') . '/' . $did . '.php'));
-                        $this->_getDb()->query("INSERT INTO " . DB_PREFIX . "options(option_name, option_value) VALUES('kl_data_call_{$did}', '{$data}')");
+                        $this->_db->query("INSERT INTO " . DB_PREFIX . "options(option_name, option_value) VALUES('kl_data_call_{$did}', '{$data}')");
                     }
                 }
             }
@@ -113,7 +113,7 @@ class KlDataCall
             if ($kl_data_call_info['version'] < self::VERSION) {
                 $kl_data_call_info['version'] = self::VERSION;
                 $kl_data_call_info = serialize($kl_data_call_info);
-                $this->_getDb()->query("UPDATE " . DB_PREFIX . "options SET option_value='{$kl_data_call_info}' WHERE option_name='kl_data_call_info'");
+                $this->_db->query("UPDATE " . DB_PREFIX . "options SET option_value='{$kl_data_call_info}' WHERE option_name='kl_data_call_info'");
                 Cache::getInstance()->updateCache('options');
             }
         }
@@ -132,8 +132,8 @@ class KlDataCall
         if ($this->_inited === true) {
             return;
         }
-
         $this->_inited = true;
+        $this->_getDb();
         $this->_msg = is_writable($this->_getDirPath('config')) && is_writable($this->_getDirPath('cache')) ? '' : '<span class="error">config或cache目录可能不可写，如果已经是可写状态，请忽略此信息。</span>';
         if (empty($this->_msg) && $this->_getlocalVersion() !== self::VERSION) {
             $this->_msg = $this->_getlocalVersion() < self::VERSION ? '<span class="error">系统检测到有新版本的插件已安装，请先到插件列表页面先关闭此插件，再开启此插件。</span>' : '<span class="error">系统检测到您可能安装了较低版本的插件，请下载使用最新版本插件。</span>';
@@ -429,9 +429,9 @@ class KlDataCall
             Cache::getInstance()->updateCache('options');
             $kl_data_call_info = Option::get('kl_data_call_' . $module['did']);
             if (is_null($kl_data_call_info)) {
-                $this->_getDb()->query("INSERT INTO " . DB_PREFIX . "options(option_name, option_value) VALUES('kl_data_call_{$module['did']}', '{$data}')");
+                $this->_db->query("INSERT INTO " . DB_PREFIX . "options(option_name, option_value) VALUES('kl_data_call_{$module['did']}', '{$data}')");
             } else {
-                $this->_getDb()->query("UPDATE " . DB_PREFIX . "options SET option_value='{$data}' WHERE option_name='kl_data_call_{$module['did']}'");
+                $this->_db->query("UPDATE " . DB_PREFIX . "options SET option_value='{$data}' WHERE option_name='kl_data_call_{$module['did']}'");
             }
             $this->_mainFun($module);
             //把更新缓存移到kl_data_call__mainFun()后面，是因为如果在前面会造成后面读取缓存报错，导致新建后第一次不能正常生成。
@@ -439,7 +439,7 @@ class KlDataCall
             emDirect("./plugin.php?plugin=kl_data_call&act=edit&id={$module['did']}&active_save=1");
         } elseif ($act == 'del') {
             $id = intval($_GET['id']);
-            $this->_getDb()->query("DELETE FROM " . DB_PREFIX . "options WHERE option_name='kl_data_call_{$id}'");
+            $this->_db->query("DELETE FROM " . DB_PREFIX . "options WHERE option_name='kl_data_call_{$id}'");
 
             Cache::getInstance()->updateCache('options');
             @unlink($this->_getDirPath('cache') . '/' . $id . '.php');
@@ -535,10 +535,10 @@ class KlDataCall
         if ($module['order_style'] == 3) $condition .= 'order by rand() ';
         if ($module['custom_tailor'] == '') $condition .= 'limit ' . $module['start_num'] . ',' . $module['dis_rows'];
         $sql = 'select a.gid as id, a.title, if(a.password!="", "", a.excerpt) as excerpt, if(a.password!="", "", a.content) as content, a.date, c.username as author, a.type, a.views, b.sortname as sort, count(d.cid) as cnum from ' . DB_PREFIX . 'blog a left join ' . DB_PREFIX . 'sort b on a.sortid=b.sid left join ' . DB_PREFIX . 'user c on c.uid=a.author left join ' . DB_PREFIX . 'comment d on d.gid=a.gid and d.hide="n" where a.hide="n" and type!="page" ' . $condition;
-        $result = $this->_getDb()->query($sql);
+        $result = $this->_db->query($sql);
         $data_arr = array();
         $auto_id = 1;
-        while ($row = $this->_getDb()->fetch_array($result, MYSQL_ASSOC)) {
+        while ($row = $this->_db->fetch_array($result, MYSQL_ASSOC)) {
             $row['auto_id'] = $auto_id;
             array_push($data_arr, $row);
             $auto_id++;
@@ -621,10 +621,10 @@ class KlDataCall
         if ($module['order_style'] == 2) $condition .= 'order by rand() ';
         if ($module['custom_tailor'] == '') $condition .= 'limit ' . $module['start_num'] . ',' . $module['dis_rows'];
         $sql = 'select a.id, a.content, a.img as imageurl, b.username as author, a.date, a.replynum from ' . DB_PREFIX . 'twitter a left join ' . DB_PREFIX . 'user b on b.uid=a.author where 1 ' . $condition;
-        $result = $this->_getDb()->query($sql);
+        $result = $this->_db->query($sql);
         $data_arr = array();
         $auto_id = 1;
-        while ($row = $this->_getDb()->fetch_array($result, MYSQL_ASSOC)) {
+        while ($row = $this->_db->fetch_array($result, MYSQL_ASSOC)) {
             $row['auto_id'] = $auto_id;
             array_push($data_arr, $row);
             $auto_id++;
@@ -688,10 +688,10 @@ class KlDataCall
         if ($module['order_style'] == 2) $condition .= 'order by rand() ';
         $condition .= 'limit ' . $module['start_num'] . ',' . $module['dis_rows'];
         $sql = 'select filename as thum_photo_url, description as photo_description, album as photo_album, addtime as photo_datetime from ' . DB_PREFIX . 'kl_album where 1 ' . $condition;
-        $result = $this->_getDb()->query($sql);
+        $result = $this->_db->query($sql);
         $data_arr = array();
         $auto_id = 1;
-        while ($row = $this->_getDb()->fetch_array($result, MYSQL_ASSOC)) {
+        while ($row = $this->_db->fetch_array($result, MYSQL_ASSOC)) {
             $row['auto_id'] = $auto_id;
             array_push($data_arr, $row);
             $auto_id++;
@@ -721,16 +721,16 @@ class KlDataCall
                         if (in_array('album_cover', $vArr)) {
                             $data['album_cover'] = '';
                             if (isset($kl_album['head'])) {
-                                $iquery = $this->_getDb()->query("SELECT * FROM " . DB_PREFIX . "kl_album WHERE id={$kl_album['head']}");
-                                if ($this->_getDb()->num_rows($iquery) > 0) {
-                                    $irow = $this->_getDb()->fetch_array($iquery);
+                                $iquery = $this->_db->query("SELECT * FROM " . DB_PREFIX . "kl_album WHERE id={$kl_album['head']}");
+                                if ($this->_db->num_rows($iquery) > 0) {
+                                    $irow = $this->_db->fetch_array($iquery);
                                     $data['album_cover'] = BLOG_URL . substr($irow['filename'], 3);
                                 }
                             }
                             if (empty($data['album_cover'])) {
-                                $iquery = $this->_getDb()->query("SELECT * FROM " . DB_PREFIX . "kl_album WHERE 1 " . $condition);
-                                if ($this->_getDb()->num_rows($iquery) > 0) {
-                                    $irow = $this->_getDb()->fetch_array($iquery);
+                                $iquery = $this->_db->query("SELECT * FROM " . DB_PREFIX . "kl_album WHERE 1 " . $condition);
+                                if ($this->_db->num_rows($iquery) > 0) {
+                                    $irow = $this->_db->fetch_array($iquery);
                                     $data['album_cover'] = BLOG_URL . substr($irow['filename'], 3);
                                 }
                             }

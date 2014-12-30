@@ -5,6 +5,8 @@
  */
 function callback_init()
 {
+    global $plugin;
+    require_once "../content/plugins/{$plugin}";
     KlDataCall::getInstance()->callbackInit();
 }
 
