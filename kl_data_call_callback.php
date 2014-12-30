@@ -5,6 +5,7 @@
  */
 function callback_init()
 {
+    KlDataCall::getInstance()->callbackInit();
 }
 
 function callback_rm()

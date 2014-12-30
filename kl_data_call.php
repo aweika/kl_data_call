@@ -35,8 +35,8 @@ class KlDataCall
     //相关资源目录
     private $_urlDir = array('assets', 'res');
 
-    //目录不可写提示信息
-    private $_dirIsWritableMsg;
+    //提示信息（目录不可写、插件版本同数据表中存储的不一致等）
+    private $_msg;
 
     /**
      * 静态方法，返回数据调用插件实例
@@ -56,6 +56,70 @@ class KlDataCall
     }
 
     /**
+     * 获取本地数据表中存储的插件版本号
+     * @return string
+     */
+    private function _getlocalVersion()
+    {
+        $kl_data_call_info = Option::get('kl_data_call_info');
+        if (is_null($kl_data_call_info)) return '';
+        $kl_data_call_info = unserialize($kl_data_call_info);
+        return $kl_data_call_info['version'];
+    }
+
+    /**
+     * 插件激活时要执行的代码（一些数据库修改等初始化或升级操作）
+     */
+    public function callbackInit()
+    {
+        Cache::getInstance()->updateCache('options');
+        $kl_data_call_info = Option::get('kl_data_call_info');
+        //未用过数据调用插件或使用2.0版本前不存在$kl_data_call_info信息
+        if (is_null($kl_data_call_info)) {
+            $info = serialize(array('version' => self::VERSION));
+            $this->_getDb()->query("INSERT INTO " . DB_PREFIX . "options(option_name, option_value) VALUES('kl_data_call_info', '{$info}')");
+            if ($this->_getDb()->affected_rows() > 0) {
+                $cod = @opendir($this->_getDirPath('config'));
+                $did_arr = array();
+                while (($filename = readdir($cod)) !== false) {
+                    $filename = str_replace('.php', '', $filename);
+                    if (is_numeric($filename)) $did_arr[] = $filename;
+                }
+                @closedir($cod);
+                //为空的话相当于没使用过插件
+                if (empty($did_arr)) return;
+                foreach ($did_arr as $did) {
+                    $kl_data_call_id = Option::get('kl_data_call_' . $did);
+                    if (is_null($kl_data_call_id)) {
+                        $data = str_replace('<?php exit;//', '', @file_get_contents($this->_getDirPath('config') . '/' . $did . '.php'));
+                        $this->_getDb()->query("INSERT INTO " . DB_PREFIX . "options(option_name, option_value) VALUES('kl_data_call_{$did}', '{$data}')");
+                    }
+                }
+            }
+            Cache::getInstance()->updateCache('options');
+        } else {
+            $kl_data_call_info = unserialize($kl_data_call_info);
+            //由于3.0版开始更新了缓存中的数据结构，所以启用时先更新全部数据缓存
+            if ($kl_data_call_info['version'] < '3.0') {
+                $options_cache = Cache::getInstance()->readCache('options');
+                foreach ($options_cache as $ock => $ocv) {
+                    if (preg_match('/^kl_data_call_(\d+)$/', $ock)) $this->_mainFun(unserialize($ocv));
+                }
+            }
+
+            //todo 如果升级有数据表相关修改，则像上面那样在这里写升级相关的代码
+
+            //每次插件升级更新数据库中存储的插件版本
+            if ($kl_data_call_info['version'] < self::VERSION) {
+                $kl_data_call_info['version'] = self::VERSION;
+                $kl_data_call_info = serialize($kl_data_call_info);
+                $this->_getDb()->query("UPDATE " . DB_PREFIX . "options SET option_value='{$kl_data_call_info}' WHERE option_name='kl_data_call_info'");
+                Cache::getInstance()->updateCache('options');
+            }
+        }
+    }
+
+    /**
      * 侧边栏钩子执行方法
      */
     public function hookAdmSidebarExt()
@@ -70,8 +134,10 @@ class KlDataCall
         }
 
         $this->_inited = true;
-        $this->_dirIsWritableMsg = is_writable($this->_getDirPath('config')) && is_writable($this->_getDirPath('cache')) ? '' : '<span class="error">config或cache目录可能不可写，如果已经是可写状态，请忽略此信息。</span>';
-
+        $this->_msg = is_writable($this->_getDirPath('config')) && is_writable($this->_getDirPath('cache')) ? '' : '<span class="error">config或cache目录可能不可写，如果已经是可写状态，请忽略此信息。</span>';
+        if (empty($this->_msg) && $this->_getlocalVersion() !== self::VERSION) {
+            $this->_msg = $this->_getlocalVersion() < self::VERSION ? '<span class="error">系统检测到有新版本的插件已安装，请先到插件列表页面先关闭此插件，再开启此插件。</span>' : '<span class="error">系统检测到您可能安装了较低版本的插件，请下载使用最新版本插件。</span>';
+        }
         addAction('adm_sidebar_ext', array($this, 'hookAdmSideBarExt'));
     }
 
@@ -100,9 +166,9 @@ class KlDataCall
     private function _getDirPath($dir)
     {
         if (in_array($dir, $this->_fileDir)) {
-            return dirname(__FILE__) . '/' . $dir . '/';
+            return dirname(__FILE__) . '/' . $dir;
         } elseif (in_array($dir, $this->_urlDir)) {
-            return BLOG_URL . 'content/plugins/' . self::ID . '/' . $dir . '/';
+            return BLOG_URL . 'content/plugins/' . self::ID . '/' . $dir;
         } else {
             return '';
         }
@@ -117,7 +183,7 @@ class KlDataCall
      */
     private function _view($view, $ext = '.php')
     {
-        return $this->_getDirPath('views') . $view . $ext;
+        return $this->_getDirPath('views') . '/' . $view . $ext;
     }
 
     /**
@@ -294,7 +360,7 @@ class KlDataCall
         if (isset($_GET['act'])) {
             echo sprintf('<script src="%s/list.js" type="text/javascript"></script>', $this->_getDirPath('assets'));
         } else {
-            echo sprintf('<link rel="stylesheet" href="%s">', $this->_getDirPath('assets') . 'notlist.css?ver=' . urlencode(self::VERSION));
+            echo sprintf('<link rel="stylesheet" href="%s">', $this->_getDirPath('assets') . '/notlist.css?ver=' . urlencode(self::VERSION));
         }
         $kl_t_array = array('<font color="red">文章调用</font>', '<font color="green">微语调用</font>', '<font color="blue">EM相册调用</font>');
         $data_call_module_config = $this->_moduleConfig();
@@ -781,8 +847,8 @@ class KlDataCall
         echo '<script src="../include/lib/js/common_tpl.js" type="text/javascript"></script>';
         echo sprintf('<script src="%s/jquery.zclip.min.js" type="text/javascript"></script>', $this->_getDirPath('res'));
         echo sprintf('<script type="text/javascript">$("#%s").addClass("sidebarsubmenu1");setTimeout(hideActived,2600);</script>', self::ID);
-        echo sprintf('<link rel="stylesheet" href="%s">', $this->_getDirPath('assets') . 'main.css?ver=' . urlencode(self::VERSION));
-        echo sprintf('<div class=containertitle><b>%s</b><span style="font-size:12px;color:#999999;">（版本：%s）</span>%s</div>', self::NAME, self::VERSION, $this->_dirIsWritableMsg);
+        echo sprintf('<link rel="stylesheet" href="%s">', $this->_getDirPath('assets') . '/main.css?ver=' . urlencode(self::VERSION));
+        echo sprintf('<div class=containertitle><b>%s</b><span style="font-size:12px;color:#999999;">（版本：%s）</span>%s</div>', self::NAME, self::VERSION, $this->_msg);
     }
 
     /**
