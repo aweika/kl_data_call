@@ -136,7 +136,7 @@ class KlDataCall
         $this->_getDb();
         $this->_msg = is_writable($this->_getDirPath('config')) && is_writable($this->_getDirPath('cache')) ? '' : '<span class="error">config或cache目录可能不可写，如果已经是可写状态，请忽略此信息。</span>';
         if (empty($this->_msg) && $this->_getlocalVersion() !== self::VERSION) {
-            $this->_msg = $this->_getlocalVersion() < self::VERSION ? '<span class="error">系统检测到有新版本的插件已安装，请先到插件列表页面先关闭此插件，再开启此插件。</span>' : '<span class="error">系统检测到您可能安装了较低版本的插件，请下载使用最新版本插件。</span>';
+            $this->_msg = $this->_getlocalVersion() < self::VERSION ? '<span class="error">系统检测到有新版本的插件已安装，请先到<a href="./plugin.php">插件列表</a>页面先关闭此插件，再开启此插件。</span>' : '<span class="error">系统检测到您可能安装了较低版本的插件，请<a target="_blank" href="#">下载</a>最新版本插件。</span>';
         }
         addAction('adm_sidebar_ext', array($this, 'hookAdmSideBarExt'));
     }
